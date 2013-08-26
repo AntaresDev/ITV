@@ -1,0 +1,1049 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 9.1.9
+-- Dumped by pg_dump version 9.1.9
+-- Started on 2013-08-26 11:41:46 BOT
+
+SET statement_timeout = 0;
+SET client_encoding = 'SQL_ASCII';
+SET standard_conforming_strings = on;
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+
+--
+-- TOC entry 176 (class 3079 OID 11720)
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+
+
+--
+-- TOC entry 2092 (class 0 OID 0)
+-- Dependencies: 176
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
+
+
+SET search_path = public, pg_catalog;
+
+--
+-- TOC entry 188 (class 1255 OID 25731)
+-- Dependencies: 558 5
+-- Name: verificar_usuario(text, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION verificar_usuario(nick text, pass text) RETURNS integer
+    LANGUAGE plpgsql
+    AS $_$
+DECLARE
+  registro record;
+  retorno INTEGER;
+BEGIN  
+  SELECT * INTO registro FROM empleado WHERE nickname=$1;
+  IF NOT FOUND THEN
+  	-- significa que el usuario no existe
+    retorno:=-2;
+  END IF;
+  IF FOUND THEN
+  	IF ( registro.contrasenia <> $2 )THEN
+    	-- significa que el password es incorrecto
+        retorno:=-1;
+    ELSIF (registro.contrasenia = $2) THEN
+    	-- significa que el registro del usuario fue un exito
+    	retorno:= 0;        
+    END IF;
+  END IF;
+  RETURN retorno;	
+END;
+$_$;
+
+
+ALTER FUNCTION public.verificar_usuario(nick text, pass text) OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- TOC entry 161 (class 1259 OID 25017)
+-- Dependencies: 5
+-- Name: cliente; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE cliente (
+    idcliente numeric NOT NULL,
+    ci numeric,
+    nit numeric,
+    institucion character varying(40),
+    nombres character varying(40) NOT NULL,
+    apellidos character varying(40) NOT NULL,
+    telefono character varying(40),
+    direccion character varying(40)
+);
+
+
+ALTER TABLE public.cliente OWNER TO postgres;
+
+--
+-- TOC entry 162 (class 1259 OID 25026)
+-- Dependencies: 5
+-- Name: compra; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE compra (
+    idcompra numeric NOT NULL,
+    descripcioncompra text,
+    costototal_naviera double precision,
+    costototal_aduana double precision,
+    costototal_transporte double precision,
+    costoadicional double precision,
+    costototalbruto double precision
+);
+
+
+ALTER TABLE public.compra OWNER TO postgres;
+
+--
+-- TOC entry 163 (class 1259 OID 25035)
+-- Dependencies: 5
+-- Name: detallecompra; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE detallecompra (
+    idproducto numeric NOT NULL,
+    idcompra numeric NOT NULL,
+    costounitario_real double precision,
+    costounitario_naviera double precision,
+    costounitario_aduana double precision,
+    margencostounitario_transporte double precision,
+    costounitario_adicional double precision,
+    costototalbrutounitario double precision,
+    cantidadcompra numeric
+);
+
+
+ALTER TABLE public.detallecompra OWNER TO postgres;
+
+--
+-- TOC entry 164 (class 1259 OID 25046)
+-- Dependencies: 5
+-- Name: detallepedido; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE detallepedido (
+    idpedido numeric NOT NULL,
+    idproducto numeric,
+    idestadetallepedido numeric,
+    cantidadpedido numeric NOT NULL,
+    descuento numeric,
+    fechaasignacion date NOT NULL,
+    preciototalpedido double precision
+);
+
+
+ALTER TABLE public.detallepedido OWNER TO postgres;
+
+--
+-- TOC entry 165 (class 1259 OID 25057)
+-- Dependencies: 5
+-- Name: empleado; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE empleado (
+    idempleado numeric NOT NULL,
+    nickname character varying(10),
+    contrasenia character varying(20),
+    cargo character varying(40),
+    nombres character varying(40) NOT NULL,
+    apellidos character varying(40) NOT NULL,
+    telefono character varying(40),
+    direccion character varying(40),
+    ciudad character varying(40),
+    departamento character varying(40),
+    correo character varying(40)
+);
+
+
+ALTER TABLE public.empleado OWNER TO postgres;
+
+--
+-- TOC entry 166 (class 1259 OID 25066)
+-- Dependencies: 5
+-- Name: estadodetallepedido; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE estadodetallepedido (
+    idestadetallepedido numeric NOT NULL,
+    nombreestado character varying(40) NOT NULL
+);
+
+
+ALTER TABLE public.estadodetallepedido OWNER TO postgres;
+
+--
+-- TOC entry 167 (class 1259 OID 25075)
+-- Dependencies: 5
+-- Name: estadopedido; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE estadopedido (
+    idestadopedido numeric NOT NULL,
+    nombreestado character varying(40) NOT NULL
+);
+
+
+ALTER TABLE public.estadopedido OWNER TO postgres;
+
+--
+-- TOC entry 168 (class 1259 OID 25084)
+-- Dependencies: 5
+-- Name: factura; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE factura (
+    idfactura numeric NOT NULL,
+    idpedido numeric NOT NULL,
+    fecha date NOT NULL,
+    fechavenc date NOT NULL
+);
+
+
+ALTER TABLE public.factura OWNER TO postgres;
+
+--
+-- TOC entry 169 (class 1259 OID 25094)
+-- Dependencies: 5
+-- Name: marca; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE marca (
+    idmarca numeric NOT NULL,
+    nombremarca character varying(40)
+);
+
+
+ALTER TABLE public.marca OWNER TO postgres;
+
+--
+-- TOC entry 170 (class 1259 OID 25103)
+-- Dependencies: 5
+-- Name: origen; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE origen (
+    idorigen numeric NOT NULL,
+    descripcionorigen text
+);
+
+
+ALTER TABLE public.origen OWNER TO postgres;
+
+--
+-- TOC entry 171 (class 1259 OID 25112)
+-- Dependencies: 5
+-- Name: pedido; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE pedido (
+    idpedido numeric NOT NULL,
+    idestadopedido numeric NOT NULL,
+    idcliente numeric NOT NULL,
+    idtipopago numeric NOT NULL,
+    idempleado numeric NOT NULL,
+    fechapedido date NOT NULL,
+    fechapago date NOT NULL
+);
+
+
+ALTER TABLE public.pedido OWNER TO postgres;
+
+--
+-- TOC entry 172 (class 1259 OID 25125)
+-- Dependencies: 5
+-- Name: producto; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE producto (
+    idproducto numeric NOT NULL,
+    idorigen numeric NOT NULL,
+    idmarca numeric NOT NULL,
+    codproducto character varying(40) NOT NULL,
+    nombreproducto character varying(40) NOT NULL,
+    descripcionproducto text,
+    costoestandar numeric NOT NULL,
+    preciolistado numeric NOT NULL,
+    categoria character varying(40),
+    descripcantidadxunidad character varying(40),
+    cantidadunidadesvendidas numeric,
+    cantidadinventariada numeric,
+    margenganancia double precision,
+    cantidadunidadesdisponibles numeric
+);
+
+
+ALTER TABLE public.producto OWNER TO postgres;
+
+--
+-- TOC entry 173 (class 1259 OID 25136)
+-- Dependencies: 5
+-- Name: repuesto; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE repuesto (
+    idproducto numeric NOT NULL,
+    idrepuesto numeric NOT NULL
+);
+
+
+ALTER TABLE public.repuesto OWNER TO postgres;
+
+--
+-- TOC entry 174 (class 1259 OID 25146)
+-- Dependencies: 5
+-- Name: tipopago; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE tipopago (
+    idtipopago numeric NOT NULL,
+    nombretipopago character varying(40) NOT NULL
+);
+
+
+ALTER TABLE public.tipopago OWNER TO postgres;
+
+--
+-- TOC entry 175 (class 1259 OID 25155)
+-- Dependencies: 5
+-- Name: vehiculo; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE vehiculo (
+    idproducto numeric NOT NULL,
+    idvehiculo numeric NOT NULL,
+    modelo character varying(40) NOT NULL,
+    anio numeric NOT NULL,
+    color character varying(40) NOT NULL,
+    nombre character varying(40) NOT NULL,
+    descripcion character varying(40) NOT NULL,
+    estado character varying(40) NOT NULL
+);
+
+
+ALTER TABLE public.vehiculo OWNER TO postgres;
+
+--
+-- TOC entry 2070 (class 0 OID 25017)
+-- Dependencies: 161 2085
+-- Data for Name: cliente; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY cliente (idcliente, ci, nit, institucion, nombres, apellidos, telefono, direccion) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2071 (class 0 OID 25026)
+-- Dependencies: 162 2085
+-- Data for Name: compra; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY compra (idcompra, descripcioncompra, costototal_naviera, costototal_aduana, costototal_transporte, costoadicional, costototalbruto) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2072 (class 0 OID 25035)
+-- Dependencies: 163 2085
+-- Data for Name: detallecompra; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY detallecompra (idproducto, idcompra, costounitario_real, costounitario_naviera, costounitario_aduana, margencostounitario_transporte, costounitario_adicional, costototalbrutounitario, cantidadcompra) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2073 (class 0 OID 25046)
+-- Dependencies: 164 2085
+-- Data for Name: detallepedido; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY detallepedido (idpedido, idproducto, idestadetallepedido, cantidadpedido, descuento, fechaasignacion, preciototalpedido) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2074 (class 0 OID 25057)
+-- Dependencies: 165 2085
+-- Data for Name: empleado; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY empleado (idempleado, nickname, contrasenia, cargo, nombres, apellidos, telefono, direccion, ciudad, departamento, correo) FROM stdin;
+1	csar	csar	admin	cesar gustavo	serrudo huarachi	79954313	barrio quechisla calle sud chichas 007	quillacollo	cochabamba	cesargustavo.serrudo@gmail.com
+\.
+
+
+--
+-- TOC entry 2075 (class 0 OID 25066)
+-- Dependencies: 166 2085
+-- Data for Name: estadodetallepedido; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY estadodetallepedido (idestadetallepedido, nombreestado) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2076 (class 0 OID 25075)
+-- Dependencies: 167 2085
+-- Data for Name: estadopedido; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY estadopedido (idestadopedido, nombreestado) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2077 (class 0 OID 25084)
+-- Dependencies: 168 2085
+-- Data for Name: factura; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY factura (idfactura, idpedido, fecha, fechavenc) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2078 (class 0 OID 25094)
+-- Dependencies: 169 2085
+-- Data for Name: marca; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY marca (idmarca, nombremarca) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2079 (class 0 OID 25103)
+-- Dependencies: 170 2085
+-- Data for Name: origen; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY origen (idorigen, descripcionorigen) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2080 (class 0 OID 25112)
+-- Dependencies: 171 2085
+-- Data for Name: pedido; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY pedido (idpedido, idestadopedido, idcliente, idtipopago, idempleado, fechapedido, fechapago) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2081 (class 0 OID 25125)
+-- Dependencies: 172 2085
+-- Data for Name: producto; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY producto (idproducto, idorigen, idmarca, codproducto, nombreproducto, descripcionproducto, costoestandar, preciolistado, categoria, descripcantidadxunidad, cantidadunidadesvendidas, cantidadinventariada, margenganancia, cantidadunidadesdisponibles) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2082 (class 0 OID 25136)
+-- Dependencies: 173 2085
+-- Data for Name: repuesto; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY repuesto (idproducto, idrepuesto) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2083 (class 0 OID 25146)
+-- Dependencies: 174 2085
+-- Data for Name: tipopago; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY tipopago (idtipopago, nombretipopago) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2084 (class 0 OID 25155)
+-- Dependencies: 175 2085
+-- Data for Name: vehiculo; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY vehiculo (idproducto, idvehiculo, modelo, anio, color, nombre, descripcion, estado) FROM stdin;
+\.
+
+
+--
+-- TOC entry 2000 (class 2606 OID 25024)
+-- Dependencies: 161 161 2086
+-- Name: pk_cliente; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY cliente
+    ADD CONSTRAINT pk_cliente PRIMARY KEY (idcliente);
+
+
+--
+-- TOC entry 2003 (class 2606 OID 25033)
+-- Dependencies: 162 162 2086
+-- Name: pk_compra; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY compra
+    ADD CONSTRAINT pk_compra PRIMARY KEY (idcompra);
+
+
+--
+-- TOC entry 2006 (class 2606 OID 25042)
+-- Dependencies: 163 163 163 2086
+-- Name: pk_detallecompra; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY detallecompra
+    ADD CONSTRAINT pk_detallecompra PRIMARY KEY (idproducto, idcompra);
+
+
+--
+-- TOC entry 2011 (class 2606 OID 25053)
+-- Dependencies: 164 164 2086
+-- Name: pk_detallepedido; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY detallepedido
+    ADD CONSTRAINT pk_detallepedido PRIMARY KEY (idpedido);
+
+
+--
+-- TOC entry 2016 (class 2606 OID 25064)
+-- Dependencies: 165 165 2086
+-- Name: pk_empleado; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY empleado
+    ADD CONSTRAINT pk_empleado PRIMARY KEY (idempleado);
+
+
+--
+-- TOC entry 2019 (class 2606 OID 25073)
+-- Dependencies: 166 166 2086
+-- Name: pk_estadodetallepedido; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY estadodetallepedido
+    ADD CONSTRAINT pk_estadodetallepedido PRIMARY KEY (idestadetallepedido);
+
+
+--
+-- TOC entry 2022 (class 2606 OID 25082)
+-- Dependencies: 167 167 2086
+-- Name: pk_estadopedido; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY estadopedido
+    ADD CONSTRAINT pk_estadopedido PRIMARY KEY (idestadopedido);
+
+
+--
+-- TOC entry 2025 (class 2606 OID 25091)
+-- Dependencies: 168 168 2086
+-- Name: pk_factura; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY factura
+    ADD CONSTRAINT pk_factura PRIMARY KEY (idfactura);
+
+
+--
+-- TOC entry 2029 (class 2606 OID 25101)
+-- Dependencies: 169 169 2086
+-- Name: pk_marca; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY marca
+    ADD CONSTRAINT pk_marca PRIMARY KEY (idmarca);
+
+
+--
+-- TOC entry 2032 (class 2606 OID 25110)
+-- Dependencies: 170 170 2086
+-- Name: pk_origen; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY origen
+    ADD CONSTRAINT pk_origen PRIMARY KEY (idorigen);
+
+
+--
+-- TOC entry 2035 (class 2606 OID 25119)
+-- Dependencies: 171 171 2086
+-- Name: pk_pedido; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY pedido
+    ADD CONSTRAINT pk_pedido PRIMARY KEY (idpedido);
+
+
+--
+-- TOC entry 2041 (class 2606 OID 25132)
+-- Dependencies: 172 172 2086
+-- Name: pk_producto; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY producto
+    ADD CONSTRAINT pk_producto PRIMARY KEY (idproducto);
+
+
+--
+-- TOC entry 2046 (class 2606 OID 25143)
+-- Dependencies: 173 173 173 2086
+-- Name: pk_repuesto; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY repuesto
+    ADD CONSTRAINT pk_repuesto PRIMARY KEY (idproducto, idrepuesto);
+
+
+--
+-- TOC entry 2050 (class 2606 OID 25153)
+-- Dependencies: 174 174 2086
+-- Name: pk_tipopago; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY tipopago
+    ADD CONSTRAINT pk_tipopago PRIMARY KEY (idtipopago);
+
+
+--
+-- TOC entry 2053 (class 2606 OID 25162)
+-- Dependencies: 175 175 175 2086
+-- Name: pk_vehiculo; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY vehiculo
+    ADD CONSTRAINT pk_vehiculo PRIMARY KEY (idproducto, idvehiculo);
+
+
+--
+-- TOC entry 1998 (class 1259 OID 25025)
+-- Dependencies: 161 2086
+-- Name: cliente_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX cliente_pk ON cliente USING btree (idcliente);
+
+
+--
+-- TOC entry 2001 (class 1259 OID 25034)
+-- Dependencies: 162 2086
+-- Name: compra_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX compra_pk ON compra USING btree (idcompra);
+
+
+--
+-- TOC entry 2004 (class 1259 OID 25043)
+-- Dependencies: 163 163 2086
+-- Name: detallecompra_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX detallecompra_pk ON detallecompra USING btree (idproducto, idcompra);
+
+
+--
+-- TOC entry 2009 (class 1259 OID 25054)
+-- Dependencies: 164 2086
+-- Name: detallepedido_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX detallepedido_pk ON detallepedido USING btree (idpedido);
+
+
+--
+-- TOC entry 2014 (class 1259 OID 25065)
+-- Dependencies: 165 2086
+-- Name: empleado_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX empleado_pk ON empleado USING btree (idempleado);
+
+
+--
+-- TOC entry 2017 (class 1259 OID 25074)
+-- Dependencies: 166 2086
+-- Name: estadodetallepedido_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX estadodetallepedido_pk ON estadodetallepedido USING btree (idestadetallepedido);
+
+
+--
+-- TOC entry 2020 (class 1259 OID 25083)
+-- Dependencies: 167 2086
+-- Name: estadopedido_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX estadopedido_pk ON estadopedido USING btree (idestadopedido);
+
+
+--
+-- TOC entry 2023 (class 1259 OID 25092)
+-- Dependencies: 168 2086
+-- Name: factura_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX factura_pk ON factura USING btree (idfactura);
+
+
+--
+-- TOC entry 2027 (class 1259 OID 25102)
+-- Dependencies: 169 2086
+-- Name: marca_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX marca_pk ON marca USING btree (idmarca);
+
+
+--
+-- TOC entry 2030 (class 1259 OID 25111)
+-- Dependencies: 170 2086
+-- Name: origen_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX origen_pk ON origen USING btree (idorigen);
+
+
+--
+-- TOC entry 2033 (class 1259 OID 25120)
+-- Dependencies: 171 2086
+-- Name: pedido_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX pedido_pk ON pedido USING btree (idpedido);
+
+
+--
+-- TOC entry 2042 (class 1259 OID 25133)
+-- Dependencies: 172 2086
+-- Name: producto_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX producto_pk ON producto USING btree (idproducto);
+
+
+--
+-- TOC entry 2047 (class 1259 OID 25145)
+-- Dependencies: 173 2086
+-- Name: relationship_10_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX relationship_10_fk ON repuesto USING btree (idproducto);
+
+
+--
+-- TOC entry 2007 (class 1259 OID 25044)
+-- Dependencies: 163 2086
+-- Name: relationship_11_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX relationship_11_fk ON detallecompra USING btree (idproducto);
+
+
+--
+-- TOC entry 2008 (class 1259 OID 25045)
+-- Dependencies: 163 2086
+-- Name: relationship_12_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX relationship_12_fk ON detallecompra USING btree (idcompra);
+
+
+--
+-- TOC entry 2043 (class 1259 OID 25134)
+-- Dependencies: 172 2086
+-- Name: relationship_13_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX relationship_13_fk ON producto USING btree (idmarca);
+
+
+--
+-- TOC entry 2044 (class 1259 OID 25135)
+-- Dependencies: 172 2086
+-- Name: relationship_14_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX relationship_14_fk ON producto USING btree (idorigen);
+
+
+--
+-- TOC entry 2036 (class 1259 OID 25121)
+-- Dependencies: 171 2086
+-- Name: relationship_1_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX relationship_1_fk ON pedido USING btree (idcliente);
+
+
+--
+-- TOC entry 2037 (class 1259 OID 25122)
+-- Dependencies: 171 2086
+-- Name: relationship_2_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX relationship_2_fk ON pedido USING btree (idtipopago);
+
+
+--
+-- TOC entry 2038 (class 1259 OID 25123)
+-- Dependencies: 171 2086
+-- Name: relationship_3_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX relationship_3_fk ON pedido USING btree (idestadopedido);
+
+
+--
+-- TOC entry 2039 (class 1259 OID 25124)
+-- Dependencies: 171 2086
+-- Name: relationship_4_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX relationship_4_fk ON pedido USING btree (idempleado);
+
+
+--
+-- TOC entry 2026 (class 1259 OID 25093)
+-- Dependencies: 168 2086
+-- Name: relationship_6_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX relationship_6_fk ON factura USING btree (idpedido);
+
+
+--
+-- TOC entry 2012 (class 1259 OID 25055)
+-- Dependencies: 164 2086
+-- Name: relationship_7_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX relationship_7_fk ON detallepedido USING btree (idproducto);
+
+
+--
+-- TOC entry 2013 (class 1259 OID 25056)
+-- Dependencies: 164 2086
+-- Name: relationship_8_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX relationship_8_fk ON detallepedido USING btree (idestadetallepedido);
+
+
+--
+-- TOC entry 2054 (class 1259 OID 25164)
+-- Dependencies: 175 2086
+-- Name: relationship_9_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX relationship_9_fk ON vehiculo USING btree (idproducto);
+
+
+--
+-- TOC entry 2048 (class 1259 OID 25144)
+-- Dependencies: 173 173 2086
+-- Name: repuesto_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX repuesto_pk ON repuesto USING btree (idproducto, idrepuesto);
+
+
+--
+-- TOC entry 2051 (class 1259 OID 25154)
+-- Dependencies: 174 2086
+-- Name: tipopago_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX tipopago_pk ON tipopago USING btree (idtipopago);
+
+
+--
+-- TOC entry 2055 (class 1259 OID 25163)
+-- Dependencies: 175 175 2086
+-- Name: vehiculo_pk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE UNIQUE INDEX vehiculo_pk ON vehiculo USING btree (idproducto, idvehiculo);
+
+
+--
+-- TOC entry 2057 (class 2606 OID 25170)
+-- Dependencies: 162 163 2002 2086
+-- Name: fk_detallec_relations_compra; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY detallecompra
+    ADD CONSTRAINT fk_detallec_relations_compra FOREIGN KEY (idcompra) REFERENCES compra(idcompra) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2056 (class 2606 OID 25165)
+-- Dependencies: 172 163 2040 2086
+-- Name: fk_detallec_relations_producto; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY detallecompra
+    ADD CONSTRAINT fk_detallec_relations_producto FOREIGN KEY (idproducto) REFERENCES producto(idproducto) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2060 (class 2606 OID 25185)
+-- Dependencies: 2018 166 164 2086
+-- Name: fk_detallep_relations_estadode; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY detallepedido
+    ADD CONSTRAINT fk_detallep_relations_estadode FOREIGN KEY (idestadetallepedido) REFERENCES estadodetallepedido(idestadetallepedido) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2058 (class 2606 OID 25175)
+-- Dependencies: 171 164 2034 2086
+-- Name: fk_detallep_relations_pedido; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY detallepedido
+    ADD CONSTRAINT fk_detallep_relations_pedido FOREIGN KEY (idpedido) REFERENCES pedido(idpedido) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2059 (class 2606 OID 25180)
+-- Dependencies: 172 164 2040 2086
+-- Name: fk_detallep_relations_producto; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY detallepedido
+    ADD CONSTRAINT fk_detallep_relations_producto FOREIGN KEY (idproducto) REFERENCES producto(idproducto) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2061 (class 2606 OID 25190)
+-- Dependencies: 2034 168 171 2086
+-- Name: fk_factura_relations_pedido; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY factura
+    ADD CONSTRAINT fk_factura_relations_pedido FOREIGN KEY (idpedido) REFERENCES pedido(idpedido) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2062 (class 2606 OID 25195)
+-- Dependencies: 1999 171 161 2086
+-- Name: fk_pedido_relations_cliente; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY pedido
+    ADD CONSTRAINT fk_pedido_relations_cliente FOREIGN KEY (idcliente) REFERENCES cliente(idcliente) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2065 (class 2606 OID 25210)
+-- Dependencies: 2015 165 171 2086
+-- Name: fk_pedido_relations_empleado; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY pedido
+    ADD CONSTRAINT fk_pedido_relations_empleado FOREIGN KEY (idempleado) REFERENCES empleado(idempleado) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2064 (class 2606 OID 25205)
+-- Dependencies: 2021 171 167 2086
+-- Name: fk_pedido_relations_estadope; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY pedido
+    ADD CONSTRAINT fk_pedido_relations_estadope FOREIGN KEY (idestadopedido) REFERENCES estadopedido(idestadopedido) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2063 (class 2606 OID 25200)
+-- Dependencies: 2049 171 174 2086
+-- Name: fk_pedido_relations_tipopago; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY pedido
+    ADD CONSTRAINT fk_pedido_relations_tipopago FOREIGN KEY (idtipopago) REFERENCES tipopago(idtipopago) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2066 (class 2606 OID 25215)
+-- Dependencies: 172 2028 169 2086
+-- Name: fk_producto_relations_marca; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY producto
+    ADD CONSTRAINT fk_producto_relations_marca FOREIGN KEY (idmarca) REFERENCES marca(idmarca) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2067 (class 2606 OID 25220)
+-- Dependencies: 170 2031 172 2086
+-- Name: fk_producto_relations_origen; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY producto
+    ADD CONSTRAINT fk_producto_relations_origen FOREIGN KEY (idorigen) REFERENCES origen(idorigen) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2068 (class 2606 OID 25225)
+-- Dependencies: 2040 173 172 2086
+-- Name: fk_repuesto_relations_producto; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY repuesto
+    ADD CONSTRAINT fk_repuesto_relations_producto FOREIGN KEY (idproducto) REFERENCES producto(idproducto) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2069 (class 2606 OID 25230)
+-- Dependencies: 172 175 2040 2086
+-- Name: fk_vehiculo_relations_producto; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY vehiculo
+    ADD CONSTRAINT fk_vehiculo_relations_producto FOREIGN KEY (idproducto) REFERENCES producto(idproducto) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 2091 (class 0 OID 0)
+-- Dependencies: 5
+-- Name: public; Type: ACL; Schema: -; Owner: postgres
+--
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM postgres;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+-- Completed on 2013-08-26 11:41:47 BOT
+
+--
+-- PostgreSQL database dump complete
+--
+
